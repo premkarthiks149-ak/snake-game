@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snake Game</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #0f172a;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .screen {
+    display: none;
+    text-align: center;
+  }
+
+  .active {
+    display: block;
+  }
+
+  button {
+    padding: 12px 25px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #22c55e;
+    color: black;
+    margin-top: 15px;
+  }
+
+  button:hover {
+    background: #16a34a;
+  }
+
+  canvas {
+    background: black;
+    border: 3px solid #22c55e;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+  }
+
+  .score {
+    margin-top: 10px;
+    font-size: 18px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- START SCREEN -->
+<div id="startScreen" class="screen active">
+  <h1>🐍 Snake Game</h1>
+  <p>Use Arrow Keys to move the snake</p>
+  <button onclick="startGame()">Start Game</button>
+</div>
+
+<!-- GAMEPLAY SCREEN -->
+<div id="gameScreen" class="screen">
+  <h1>Score: <span id="score">0</span></h1>
+  <canvas id="game" width="400" height="400"></canvas>
+</div>
+
+<!-- GAME OVER SCREEN -->
+<div id="gameOverScreen" class="screen">
+  <h1>Game Over 😢</h1>
+  <p>Your Score: <span id="finalScore"></span></p>
+  <button onclick="restartGame()">Restart</button>
+</div>
+
+<script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const box = 20;
+
+  let snake, food, direction, score, game;
+
+  document.addEventListener("keydown", changeDirection);
+
+  function startGame() {
+    showScreen("gameScreen");
+    initGame();
+    game = setInterval(draw, 120);
+  }
+
+  function restartGame() {
+    showScreen("startScreen");
+  }
+
+  function initGame() {
+    score = 0;
+    direction = "RIGHT";
+    document.getElementById("score").innerText = score;
+
+    snake = [{ x: 10 * box, y: 10 * box }];
+
+    food = {
+      x: Math.floor(Math.random() * 19) * box,
+      y: Math.floor(Math.random() * 19) * box
+    };
+  }
+
+  function showScreen(screenId) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(screenId).classList.add("active");
+  }
+
+  function changeDirection(e) {
+    if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+    else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+    else if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+    else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Snake
+    snake.forEach((part, index) => {
+      ctx.fillStyle = index === 0 ? "#22c55e" : "#16a34a";
+      ctx.fillRect(part.x, part.y, box, box);
+    });
+
+    // Food
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    let headX = snake[0].x;
+    let headY = snake[0].y;
+
+    if (direction === "UP") headY -= box;
+    if (direction === "DOWN") headY += box;
+    if (direction === "LEFT") headX -= box;
+    if (direction === "RIGHT") headX += box;
+
+    // Eat food
+    if (headX === food.x && headY === food.y) {
+      score++;
+      document.getElementById("score").innerText = score;
+      food = {
+        x: Math.floor(Math.random() * 19) * box,
+        y: Math.floor(Math.random() * 19) * box
+      };
+    } else {
+      snake.pop();
+    }
+
+    const newHead = { x: headX, y: headY };
+
+    // Game Over
+    if (
+      headX < 0 ||
+      headY < 0 ||
+      headX >= canvas.width ||
+      headY >= canvas.height ||
+      collision(newHead, snake)
+    ) {
+      clearInterval(game);
+      document.getElementById("finalScore").innerText = score;
+      showScreen("gameOverScreen");
+    }
+
+    snake.unshift(newHead);
+  }
+
+  function collision(head, body) {
+    return body.some(part => part.x === head.x && part.y === head.y);
+  }
+</script>
+
+</body>
+</html>
